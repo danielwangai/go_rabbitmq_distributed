@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"flag"
-	"fmt"
+	"go_rabbitmq/src/distributed/dto"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -27,9 +30,20 @@ func main() {
 
 	signal := time.Tick(dur)
 
+	// encode data to the buffer for transmission
+	buf := new(bytes.Buffer)
+	enc := gob.NewEncoder(buf)
+
 	for range signal {
 		calcValue()
-		fmt.Printf("Reading sent. Value: %v\n", value)
+		reading := dto.SensorMessage{
+			Name:      *name,
+			Value:     value,
+			Timestamp: time.Now(),
+		}
+		buf.Reset()         // reset the buffer - remove previous data
+		enc.Encode(reading) // encode the message
+		log.Printf("Reading sent. Value: %v\n", value)
 	}
 }
 
